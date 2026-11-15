@@ -1,21 +1,21 @@
 import React from 'react';
-import { 
-  BarChart3, 
-  Plus, 
-  Folder, 
-  FileText, 
-  Database, 
+import {
+  BarChart3,
+  Plus,
+  Folder,
+  FileText,
+  Database,
   Sliders,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
 
-export type NavItemKey = 
-  | 'overview' 
-  | 'new-investigation' 
-  | 'investigations' 
-  | 'reports' 
-  | 'data-sources' 
+export type NavItemKey =
+  | 'overview'
+  | 'new-investigation'
+  | 'investigations'
+  | 'reports'
+  | 'data-sources'
   | 'settings';
 
 interface SidebarProps {
@@ -147,7 +147,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <span style={{ width: '5px', height: '5px', backgroundColor: 'var(--color-success)', display: 'inline-block' }} />
               <span style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>NASA POWER API Active</span>
             </div>
-            <div style={{ marginTop: '2px' }}>PostgreSQL 16 (Port 5439)</div>
+            {/* <div style={{ marginTop: '2px' }}>PostgreSQL 16 (Port 5439)</div> */}
           </div>
         ) : (
           <span style={{ display: 'inline-block', width: '6px', height: '6px', backgroundColor: 'var(--color-success)' }} />
