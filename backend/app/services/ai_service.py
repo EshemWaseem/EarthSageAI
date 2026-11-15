@@ -1,5 +1,6 @@
 import json
 import logging
+import asyncio
 from typing import Dict, Any, List, Optional
 from app.core.config import settings
 from app.providers.nasa_power import SUPPORTED_PARAMETERS
@@ -27,31 +28,43 @@ class GeminiResearchAssistant:
     """
 
     def __init__(self):
+        self._client = None
+        self._init_client()
+
+    def _init_client(self):
         self.provider = settings.AI_PROVIDER
         self.api_key = settings.GEMINI_API_KEY
         self.model_name = settings.GEMINI_MODEL
         self._client = None
 
-        if self.provider == "gemini" and self.api_key:
+        if (self.provider == "gemini" or (self.provider != "none" and self.api_key)) and self.api_key:
             try:
                 from google import genai
-                self._client = genai.Client(api_key=self.api_key)
+                from google.genai import types
+                self._client = genai.Client(
+                    api_key=self.api_key,
+                    http_options=types.HttpOptions(timeout=30.0)
+                )
+                logger.info(f"Initialized Google Gen AI Client with model {self.model_name}")
             except Exception as e:
                 logger.warning(f"Failed to initialize Google Gen AI Client: {e}")
                 self._client = None
 
     def is_available(self) -> bool:
+        if self._client is None and settings.GEMINI_API_KEY and settings.AI_PROVIDER != "none":
+            self._init_client()
         return self._client is not None
 
     def get_status(self) -> Dict[str, Any]:
+        available = self.is_available()
         return {
-            "available": self.is_available(),
-            "provider": self.provider,
-            "model": self.model_name if self.is_available() else None,
+            "available": available,
+            "provider": self.provider if available else "none",
+            "model": self.model_name if available else None,
             "message": (
                 f"Gemini AI Research Assistant active ({self.model_name})"
-                if self.is_available()
-                else "Gemini AI is currently inactive. Configure AI_PROVIDER=gemini and GEMINI_API_KEY in backend .env to enable."
+                if available
+                else "Gemini AI is currently inactive. Configure GEMINI_API_KEY (or GOOGLE_API_KEY) in Render/backend environment to enable."
             )
         }
 
@@ -94,21 +107,18 @@ Respond ONLY with a valid JSON object with the following exact keys:
 Ensure latitude is between -90 and 90, longitude between -180 and 180, and years between 1981 and 2023.
 """
         try:
-            response = self._client.models.generate_content(
-                model=self.model_name,
-                contents=prompt
+            from google.genai import types
+            config = types.GenerateContentConfig(
+                http_options=types.HttpOptions(timeout=30.0)
             )
-            text = response.text.strip()
-            # Clean possible markdown fence
-            if text.startswith("```"):
-                lines = text.split("\n")
-                if lines[0].startswith("```"):
-                    lines = lines[1:]
-                if lines and lines[-1].startswith("```"):
-                    lines = lines[:-1]
-                text = "\n".join(lines).strip()
-
-            parsed = json.loads(text)
+            response = await asyncio.to_thread(
+                self._client.models.generate_content,
+                model=self.model_name,
+                contents=prompt,
+                config=config
+            )
+            text = (response.text or "").strip()
+            parsed = self._extract_json(text)
             parsed["is_ai_generated"] = True
             parsed["ai_model"] = self.model_name
             return parsed
@@ -155,20 +165,18 @@ Respond ONLY with a valid JSON object with the following keys:
 }}
 """
         try:
-            response = self._client.models.generate_content(
-                model=self.model_name,
-                contents=prompt
+            from google.genai import types
+            config = types.GenerateContentConfig(
+                http_options=types.HttpOptions(timeout=30.0)
             )
-            text = response.text.strip()
-            if text.startswith("```"):
-                lines = text.split("\n")
-                if lines[0].startswith("```"):
-                    lines = lines[1:]
-                if lines and lines[-1].startswith("```"):
-                    lines = lines[:-1]
-                text = "\n".join(lines).strip()
-
-            parsed = json.loads(text)
+            response = await asyncio.to_thread(
+                self._client.models.generate_content,
+                model=self.model_name,
+                contents=prompt,
+                config=config
+            )
+            text = (response.text or "").strip()
+            parsed = self._extract_json(text)
             parsed["is_ai_generated"] = True
             parsed["ai_model"] = self.model_name
             parsed["disclaimer"] = "AI-Generated Scientific Interpretation (Advisory Only). All findings are derived from backend non-parametric statistical calculations."
@@ -176,6 +184,23 @@ Respond ONLY with a valid JSON object with the following keys:
         except Exception as e:
             logger.warning(f"Gemini explanation generation error: {e}. Falling back to template explanation.")
             return self._fallback_explanation(investigation_summary)
+
+    @staticmethod
+    def _extract_json(text: str) -> Dict[str, Any]:
+        """Extract and parse JSON object from model output."""
+        cleaned = text.strip()
+        if cleaned.startswith("```"):
+            lines = cleaned.split("\n")
+            if lines[0].startswith("```"):
+                lines = lines[1:]
+            if lines and lines[-1].startswith("```"):
+                lines = lines[:-1]
+            cleaned = "\n".join(lines).strip()
+        start = cleaned.find("{")
+        end = cleaned.rfind("}")
+        if start != -1 and end != -1 and end > start:
+            cleaned = cleaned[start:end + 1]
+        return json.loads(cleaned)
 
     def _fallback_plan(self, question: str) -> Dict[str, Any]:
         """Deterministic plan generator when AI is disabled."""
