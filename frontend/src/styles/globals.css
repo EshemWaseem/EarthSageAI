@@ -1,0 +1,78 @@
+@import './tokens.css';
+@import 'leaflet/dist/leaflet.css';
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+  font-family: var(--font-family);
+  font-size: 13px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Tabular numerals for scientific values */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+h1, .text-h1 {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--color-text-primary);
+}
+
+h2, .text-h2 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+h3, .text-h3 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+:focus-visible {
+  outline: 1px solid var(--color-border-focus);
+  outline-offset: 1px;
+}
+
+button {
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+input, select, textarea {
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--color-text-primary);
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th, td {
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.leaflet-container {
+  font-family: var(--font-family) !important;
+  background: #f4f4f5 !important;
+}

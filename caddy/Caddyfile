@@ -1,0 +1,48 @@
+{
+    email {$ACME_EMAIL:admin@example.com}
+    admin off
+}
+
+{$DOMAIN:localhost} {
+    encode gzip zstd
+
+    # Security Headers
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+
+    # Backend API routing
+    handle /api/* {
+        reverse_proxy backend:8000 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # API Interactive Documentation
+    handle /docs* {
+        reverse_proxy backend:8000
+    }
+    handle /redoc* {
+        reverse_proxy backend:8000
+    }
+    handle /openapi.json {
+        reverse_proxy backend:8000
+    }
+
+    # Backend Health Check
+    handle /health {
+        reverse_proxy backend:8000
+    }
+
+    # Frontend SPA routing
+    handle {
+        reverse_proxy frontend:80
+    }
+}
+
