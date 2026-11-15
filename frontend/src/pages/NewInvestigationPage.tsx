@@ -228,10 +228,28 @@ export const NewInvestigationPage: React.FC<NewInvestigationPageProps> = ({
             </div>
 
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                <label style={{ fontSize: '12px', fontWeight: 500 }}>
-                  Research Question *
-                </label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <label style={{ fontSize: '12px', fontWeight: 500 }}>
+                    Research Question *
+                  </label>
+                  {aiStatus && (
+                    <span
+                      style={{
+                        fontSize: '10px',
+                        padding: '1px 6px',
+                        borderRadius: '3px',
+                        fontWeight: 500,
+                        backgroundColor: aiStatus.available ? '#ecfdf5' : 'var(--color-surface)',
+                        color: aiStatus.available ? '#065f46' : 'var(--color-text-muted)',
+                        border: `1px solid ${aiStatus.available ? '#a7f3d0' : 'var(--color-border)'}`,
+                      }}
+                      title={aiStatus.message}
+                    >
+                      {aiStatus.available ? `AI: ${aiStatus.model || 'Gemini'}` : 'AI: Offline (Deterministic Mode)'}
+                    </span>
+                  )}
+                </div>
                 <button
                   type="button"
                   onClick={handlePlanWithAi}
@@ -241,16 +259,17 @@ export const NewInvestigationPage: React.FC<NewInvestigationPageProps> = ({
                     alignItems: 'center',
                     gap: '4px',
                     fontSize: '11px',
-                    padding: '2px 8px',
+                    padding: '3px 10px',
                     border: '1px solid var(--color-border)',
                     backgroundColor: 'var(--color-surface)',
                     color: 'var(--color-primary)',
                     cursor: 'pointer',
-                    fontWeight: 500
+                    fontWeight: 500,
+                    borderRadius: 'var(--radius-xs)'
                   }}
                 >
                   <Sparkles size={12} />
-                  {isAiPlanning ? 'Formulating Plan...' : 'Plan with AI Assistant'}
+                  {isAiPlanning ? 'Formulating Plan...' : (aiStatus?.available ? 'Plan with Gemini AI' : 'Plan with Scientific Assistant')}
                 </button>
               </div>
               <textarea

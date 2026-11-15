@@ -34,9 +34,16 @@ export const GeographicMap: React.FC<GeographicMapProps> = ({
         attributionControl: false,
       });
 
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      // CARTO Basemaps require an API key to serve tiles without "API KEY REQUIRED" watermarks.
+      // Configured via VITE_CARTO_API_KEY. When absent, falls back to OpenStreetMap so watermarks never appear.
+      const cartoApiKey = (import.meta.env.VITE_CARTO_API_KEY || '').trim();
+      const tileUrl = cartoApiKey
+        ? `https://{s}.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}{r}.png?key=${encodeURIComponent(cartoApiKey)}`
+        : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+
+      L.tileLayer(tileUrl, {
         maxZoom: 19,
-        subdomains: 'abcd',
+        subdomains: cartoApiKey ? 'abcd' : 'abc',
       }).addTo(map);
 
       L.control.zoom({ position: 'topright' }).addTo(map);

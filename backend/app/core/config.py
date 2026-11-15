@@ -2,7 +2,7 @@
 import os
 from typing import Optional, List
 
-from pydantic import ConfigDict
+from pydantic import ConfigDict, model_validator
 from pydantic_settings import BaseSettings
 
 
@@ -36,10 +36,11 @@ class Settings(BaseSettings):
     )
     NASA_POWER_TIMEOUT: float = float(os.getenv("NASA_POWER_TIMEOUT", "30.0"))
 
-    # AI / Gemini
-    AI_PROVIDER: str = os.getenv("AI_PROVIDER", "none").strip().lower()
-    GEMINI_API_KEY: Optional[str] = os.getenv("GEMINI_API_KEY", None)
-    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-2.5-flash").strip()
+    # AI / Gemini (Supports both GEMINI_API_KEY and GOOGLE_API_KEY seamlessly)
+    AI_PROVIDER: Optional[str] = None
+    GEMINI_API_KEY: Optional[str] = None
+    GOOGLE_API_KEY: Optional[str] = None
+    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-3.8-flash").strip()
 
     # JWT & Authentication
     # Secret must be provided through .env or deployment environment variables.
@@ -66,6 +67,18 @@ class Settings(BaseSettings):
         env_file=".env",
         extra="allow"
     )
+
+    @model_validator(mode="after")
+    def assemble_gemini_config(self) -> "Settings":
+        key = (self.GEMINI_API_KEY or self.GOOGLE_API_KEY or "").strip() or None
+        self.GEMINI_API_KEY = key
+        
+        provider = (self.AI_PROVIDER or "").strip().lower()
+        if not provider:
+            self.AI_PROVIDER = "gemini" if self.GEMINI_API_KEY else "none"
+        else:
+            self.AI_PROVIDER = provider
+        return self
 
     def get_cors_origins(self) -> List[str]:
         raw = self.CORS_ORIGINS.strip()

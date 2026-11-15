@@ -484,9 +484,27 @@ export const InvestigationPage: React.FC<InvestigationPageProps> = ({
 
           {aiExplanation && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
-              <div style={{ padding: '6px 10px', backgroundColor: '#EFF6FF', border: '1px solid #BFDBFE', fontSize: '11px', color: '#1E40AF', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Info size={14} />
-                <span>{aiExplanation.disclaimer || 'AI-Generated Interpretation (Advisory Only). Derived from backend statistics.'}</span>
+              <div style={{
+                padding: '8px 12px',
+                backgroundColor: aiExplanation.is_ai_generated ? '#f0fdf4' : '#f9fafb',
+                border: `1px solid ${aiExplanation.is_ai_generated ? '#bbf7d0' : '#e5e7eb'}`,
+                fontSize: '11px',
+                color: aiExplanation.is_ai_generated ? '#166534' : '#4b5563',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '8px',
+                borderRadius: 'var(--radius-xs)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Info size={14} />
+                  <span>{aiExplanation.disclaimer || 'Scientific Interpretation (Advisory Only). Derived from backend statistics.'}</span>
+                </div>
+                {aiExplanation.is_ai_generated && (
+                  <span style={{ fontSize: '10px', fontWeight: 600, padding: '1px 6px', backgroundColor: '#dcfce7', borderRadius: '3px', color: '#15803d' }}>
+                    {aiExplanation.ai_model || 'Gemini'}
+                  </span>
+                )}
               </div>
 
               {/* Plain Language Summary */}
